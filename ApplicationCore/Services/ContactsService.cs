@@ -6,18 +6,40 @@ using System.Text;
 
 namespace ApplicationCore.Services
 {
-    public class ContactsService
+    public class ContactsService : IContactsService
     {
-        private readonly IContactData contactData;
+        //private readonly IContactData contactData;
 
-        public ContactsService(IContactData contactData)
+        //public ContactsService(IContactData contactData)
+        //{
+        //    this.contactData = contactData;
+        //}
+        public ContactsService()
         {
-            this.contactData = contactData;
+
         }
 
         public IEnumerable<Contact> GetContacts()
         {
-            return this.contactData.Contacts;
+            return new[]
+            {
+                new Contact
+                {
+                  Id = 1,
+                  First = "Erik",
+                  Last = "Sharp",
+                  ImageUrl = "https://i.imgur.com/SxJrbWX.jpg",
+                  Description = "Unemployed Software Engineer"
+                },
+                new Contact
+                {
+                  Id = 2,
+                  First = "Lynsey",
+                  Last = "Sharp",
+                  ImageUrl = "https://i.imgur.com/9z0eOJv.jpg",
+                  Description = "Software Test Analyst"
+                }
+            };
         }
     }
 }
