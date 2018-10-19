@@ -7,6 +7,6 @@ namespace ApplicationCore.Interfaces
 {
     public interface IContactData
     {
-        IEnumerable<Contact> Contacts { get; }
+        IEnumerable<Contact> GetContacts();
     }
 }
