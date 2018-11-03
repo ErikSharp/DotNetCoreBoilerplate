@@ -1,6 +1,8 @@
-﻿using ApplicationCore.Helpers;
+﻿using ApplicationCore.Dtos;
+using ApplicationCore.Helpers;
 using ApplicationCore.Interfaces;
 using ApplicationCore.Models;
+using AutoMapper;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -17,27 +19,43 @@ namespace ApplicationCore.Services
         // users hardcoded for simplicity, store in a db with hashed passwords in production applications
         private List<User> _users = new List<User>
         {
-            new User { Id = 1, FirstName = "Test", LastName = "User", Username = "test", Password = "test" }
+            new User
+            {
+                Id = 1,
+                Email = "erik.sharp@hadleyshope.com",
+                PasswordHash = "$2y$12$yVYkJsR7a4Wj3wRzCD9Pn.DvDGWY3Dzx2AwisSqailn3Pyu.X.zWi" //password
+            }
         };
 
-        private readonly AppSettings _appSettings;
+        private readonly AppSettings appSettings;
+        private readonly IMapper mapper;
 
-        public UserService(IOptions<AppSettings> appSettings)
+        public UserService(
+            IOptions<AppSettings> appSettings,
+            IMapper mapper)
         {
-            _appSettings = appSettings.Value;
+            this.appSettings = appSettings.Value;
+            this.mapper = mapper;
         }
 
-        public User Authenticate(string username, string password)
+        public UserOut Authenticate(UserIn userIn)
         {
-            var user = _users.SingleOrDefault(x => x.Username == username && x.Password == password);
+            var user = _users.SingleOrDefault(x => x.Email == userIn.Email);
 
             // return null if user not found
             if (user == null)
                 return null;
 
+            bool passMatchesHash =
+                BCrypt.Net.BCrypt.Verify(userIn.Password, user.PasswordHash);
+
+            // return null when wrong password
+            if (!passMatchesHash)
+                return null;
+
             // authentication successful so generate jwt token
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+            var key = Encoding.ASCII.GetBytes(appSettings.Secret);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
@@ -48,20 +66,17 @@ namespace ApplicationCore.Services
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            user.Token = tokenHandler.WriteToken(token);
 
-            // remove password before returning
-            user.Password = null;
-
-            return user;
+            var userOut = mapper.Map<UserOut>(user);
+            userOut.Token = tokenHandler.WriteToken(token);
+            
+            return userOut;
         }
 
-        public IEnumerable<User> GetAll()
+        public IEnumerable<UserOut> GetAll()
         {
-            // return users without passwords
-            return _users.Select(x => {
-                x.Password = null;
-                return x;
+            return _users.Select(u => {
+                return mapper.Map<UserOut>(u);
             });
         }
     }

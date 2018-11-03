@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
+using ApplicationCore.Dtos;
+using ApplicationCore.Helpers;
 using ApplicationCore.Interfaces;
 using ApplicationCore.Models;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,31 +19,36 @@ namespace Web.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private IUserService _userService;
+        private readonly IUserService userService;
 
         public UsersController(IUserService userService)
         {
-            _userService = userService;
+            this.userService = userService;
         }
 
         [AllowAnonymous]
         [HttpPost("authenticate")]
-        public IActionResult Authenticate([FromBody]User userParam)
+        public IActionResult Authenticate([FromBody]UserIn userParam)
         {
-            var user = _userService.Authenticate(userParam.Username, userParam.Password);
+            UserOut authenticatedUser = userService.Authenticate(userParam);
 
-            if (user == null)
+            if (authenticatedUser == null)
             {
                 return BadRequest(new { message = "Username or password is incorrect" });
             }
 
-            return Ok(user);
+            return Ok(authenticatedUser);
         }
 
         [HttpGet]
-        public IActionResult GetAll()
+        public IActionResult GetAll([FromHeader(Name = "Authorization")]string tokenString)
         {
-            var users = _userService.GetAll();
+            var handler = new JwtSecurityTokenHandler();
+            var canRead = handler.CanReadToken(tokenString);
+            var token = handler.ReadJwtToken(tokenString);
+            var keys = token.Payload.Keys;
+
+            var users = userService.GetAll();
             return Ok(users);
         }
     }

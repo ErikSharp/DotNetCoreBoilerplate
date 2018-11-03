@@ -1,4 +1,4 @@
-﻿using ApplicationCore.Models;
+﻿using ApplicationCore.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,7 +7,7 @@ namespace ApplicationCore.Interfaces
 {
     public interface IUserService
     {
-        User Authenticate(string username, string password);
-        IEnumerable<User> GetAll();
+        UserOut Authenticate(UserIn user);
+        IEnumerable<UserOut> GetAll();
     }
 }

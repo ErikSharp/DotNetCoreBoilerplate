@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ApplicationCore.Models
+namespace ApplicationCore.Dtos
 {
-    public class User
+    public class UserOut
     {
         public int Id { get; set; }
         public string Email { get; set; }
-        public string PasswordHash { get; set; }
+        public string Token { get; set; }
     }
 }
